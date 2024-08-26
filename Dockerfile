@@ -8,13 +8,19 @@ ENV PIP_PREFER_BINARY=1
 # Ensures output from python is printed immediately to the terminal without buffering
 ENV PYTHONUNBUFFERED=1 
 
-RUN apt update -y && add-apt-repository -y ppa:git-core/ppa && apt update -y && apt install -y aria2 git git-lfs unzip ffmpeg
+
 
 # Install Python, git and other necessary tools
 RUN apt-get update && apt-get install -y \
+    # add-apt-repository -y ppa:git-core/ppa && apt-get update -y \
     python3.10 \
     python3-pip \
-    wget
+    wget \
+    aria2 \
+    git \
+    git-lfs \
+    unzip \
+    ffmpeg
 
 # Clean up to reduce image size
 RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
@@ -32,7 +38,7 @@ RUN pip3 install --upgrade --no-cache-dir torch torchvision torchaudio --index-u
 # Install runpod
 RUN pip3 install runpod requests
 
-RUN pip install opencv-python imageio imageio-ffmpeg ffmpeg-python av \
+RUN pip3 install opencv-python imageio imageio-ffmpeg ffmpeg-python av \
 xformers==0.0.25 torchsde==0.2.6 einops==0.8.0 diffusers==0.28.0 transformers==4.44.2 accelerate==0.33.0 insightface==0.7.3 onnxruntime==1.18.0 onnxruntime-gpu==1.18.0 color-matcher==0.5.0 pilgram==1.2.1 \
 ultralytics==8.2.27 segment-anything==1.0 piexif==1.1.3 qrcode==7.4.2 requirements-parser==0.9.0 rembg==2.0.57 rich==13.7.1 rich-argparse==1.5.1 matplotlib==3.8.4 pillow spandrel==0.3.4 \
 scikit-image==0.24.0 opencv-python-headless==4.10.0.84 GitPython==3.1.43 scipy==1.14.0 numpy==1.26.4 cachetools==5.4.0 librosa==0.10.2.post1 importlib-metadata==8.0.0 PyYAML==6.0.1 filelock==3.15.4 \
@@ -58,34 +64,38 @@ ARG MODEL_TYPE
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN git clone https://github.com/ltdrdata/ComfyUI-Manager custom_nodes/ComfyUI-Manager && \
-git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts custom_nodes/ComfyUI-Custom-Scripts && \
-git clone https://github.com/cubiq/ComfyUI_essentials custom_nodes/ComfyUI_essentials && \
-git clone https://github.com/rgthree/rgthree-comfy custom_nodes/rgthree-comfy && \
-git clone https://github.com/Derfuu/Derfuu_ComfyUI_ModdedNodes custom_nodes/Derfuu_ComfyUI_ModdedNodes && \
-git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack custom_nodes/ComfyUI-Impact-Pack && \
-git clone https://github.com/ltdrdata/ComfyUI-Inspire-Pack custom_nodes/ComfyUI-Inspire-Pack && \
-git clone https://github.com/aidenli/ComfyUI_NYJY custom_nodes/ComfyUI_NYJY && \
-git clone https://github.com/kijai/ComfyUI-KJNodes custom_nodes/ComfyUI-KJNodes && \
-git clone https://github.com/Fannovel16/comfyui_controlnet_aux custom_nodes/comfyui_controlnet_aux && \
-git clone https://github.com/shiimizu/ComfyUI-TiledDiffusion custom_nodes/ComfyUI-TiledDiffusion && \
-git clone https://github.com/WASasquatch/was-node-suite-comfyui custom_nodes/was-node-suite-comfyui && \
-git clone https://github.com/Extraltodeus/ComfyUI-AutomaticCFG custom_nodes/ComfyUI-AutomaticCFG
+RUN git clone https://github.com/ltdrdata/ComfyUI-Manager custom_nodes/ComfyUI-Manager
+RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts custom_nodes/ComfyUI-Custom-Scripts
+RUN git clone https://github.com/cubiq/ComfyUI_essentials custom_nodes/ComfyUI_essentials
+RUN git clone https://github.com/rgthree/rgthree-comfy custom_nodes/rgthree-comfy
+RUN git clone https://github.com/Derfuu/Derfuu_ComfyUI_ModdedNodes custom_nodes/Derfuu_ComfyUI_ModdedNodes
+RUN git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack custom_nodes/ComfyUI-Impact-Pack
+RUN git clone https://github.com/ltdrdata/ComfyUI-Inspire-Pack custom_nodes/ComfyUI-Inspire-Pack
+RUN git clone https://github.com/aidenli/ComfyUI_NYJY custom_nodes/ComfyUI_NYJY
+RUN git clone https://github.com/kijai/ComfyUI-KJNodes custom_nodes/ComfyUI-KJNodes
+RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux custom_nodes/comfyui_controlnet_aux
+RUN git clone https://github.com/shiimizu/ComfyUI-TiledDiffusion custom_nodes/ComfyUI-TiledDiffusion
+RUN git clone https://github.com/WASasquatch/was-node-suite-comfyui custom_nodes/was-node-suite-comfyui
+RUN git clone https://github.com/Extraltodeus/ComfyUI-AutomaticCFG custom_nodes/ComfyUI-AutomaticCFG
 
-RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/PitEyeDetailer-v2-seg.pt -d models/ultralytics/segm -o PitEyeDetailer-v2-seg.pt && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/4xRealWebPhoto_v4_dat2.safetensors -d models/upscale_models -o 4xRealWebPhoto_v4_dat2.safetensors && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/dreamshaperXL_lightningDPMSDE.safetensors -d models/checkpoints -o dreamshaperXL_lightningDPMSDE.safetensors && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/xinsir-controlnet-tile-sdxl-1.0.safetensors -d models/controlnet -o xinsir-controlnet-tile-sdxl-1.0.safetensors && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/flux1-dev.sft -d models/unet -o flux1-dev.sft && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/ae.sft -d models/vae -o ae.sft && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/clip_l.safetensors -d models/clip -o clip_l.safetensors && \
-aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/t5xxl_fp16.safetensors -d models/clip -o t5xxl_fp16.safetensors
+RUN git clone https://huggingface.co/google/siglip-so400m-patch14-384 models/clip/siglip-so400m-patch14-384
+RUN git clone https://huggingface.co/unsloth/Meta-Llama-3.1-8B-bnb-4bit models/llm/Meta-Llama-3.1-8B-bnb-4bit
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/PitEyeDetailer-v2-seg.pt -d models/ultralytics/segm -o PitEyeDetailer-v2-seg.pt
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/4xRealWebPhoto_v4_dat2.safetensors -d models/upscale_models -o 4xRealWebPhoto_v4_dat2.safetensors
+RUN  aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/dreamshaperXL_lightningDPMSDE.safetensors -d models/checkpoints -o dreamshaperXL_lightningDPMSDE.safetensors
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/ultralytics/resolve/main/xinsir-controlnet-tile-sdxl-1.0.safetensors -d models/controlnet -o xinsir-controlnet-tile-sdxl-1.0.safetensors
+RUN  aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/flux1-dev.sft -d models/unet -o flux1-dev.sft 
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/ae.sft -d models/vae -o ae.sft
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/clip_l.safetensors -d models/clip -o clip_l.safetensors
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/FLUX.1-dev/resolve/main/t5xxl_fp16.safetensors -d models/clip -o t5xxl_fp16.safetensors
+RUN aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/unsloth/Meta-Llama-3.1-8B-bnb-4bit/resolve/main/model.safetensors -d models/clip -o t5xxl_fp16.safetensors
 
 # Stage 3: Final image
 FROM base as final
 
 # Copy models from stage 2 to the final image
 COPY --from=downloader /comfyui/models /comfyui/models
+COPY --from=downloader /comfyui/custom_nodes /comfyui/custom_nodes
 
 # Start the container
 CMD /start.sh
